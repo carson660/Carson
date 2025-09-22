@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  timezone      String?
+  languages     String[] @default([])
+  games         String[] @default([])
+  hourlyRate    Int?
+  availability  String?
+  ratingAvg     Float?    @default(0)
+  ratingCount   Int       @default(0)
+
+  userTags      UserTag[]
+  tasks         Task[]    @relation("OwnerTasks")
+  offers        Offer[]   @relation("UserOffers")
+  buyerOrders   Order[]   @relation("BuyerOrders")
+  sellerOrders  Order[]   @relation("SellerOrders")
+  messages      Message[]
+  roles         Role[]    @relation("UserRoles")
+
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Role {
+  id    String @id @default(cuid())
+  name  String @unique
+  users User[] @relation("UserRoles")
+}
+
+model Task {
+  id            String      @id @default(cuid())
+  ownerId       String
+  owner         User        @relation("OwnerTasks", fields: [ownerId], references: [id])
+  game          String
+  title         String
+  description   String
+  budgetMin     Int
+  budgetMax     Int
+  scheduleBits  String?
+  languageReq   String[] @default([])
+  status        TaskStatus  @default(OPEN)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  taskTags      TaskTag[]
+  offers        Offer[]
+  orders        Order[]
+  messages      Message[]
+}
+
+enum TaskStatus {
+  OPEN
+  ACCEPTED
+  IN_PAYMENT
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
+
+model Offer {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id])
+  userId    String
+  user      User     @relation("UserOffers", fields: [userId], references: [id])
+  note      String?
+  price     Int?
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  taskId          String
+  task            Task        @relation(fields: [taskId], references: [id])
+  buyerId         String
+  sellerId        String
+  buyer           User        @relation("BuyerOrders", fields: [buyerId], references: [id])
+  seller          User        @relation("SellerOrders", fields: [sellerId], references: [id])
+  status          OrderStatus @default(PENDING_PAYMENT)
+  stripeSessionId String?
+  totalAmount     Int
+  platformFee     Int
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  ratingByBuyer   Int?
+  ratingBySeller  Int?
+  completedAt     DateTime?
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model Tag {
+  id        String   @id
+  type      String
+  label     String
+  aliases   String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userTags  UserTag[]
+  taskTags  TaskTag[]
+}
+
+model UserTag {
+  id         String  @id @default(cuid())
+  userId     String
+  tagId      String
+  user       User    @relation(fields: [userId], references: [id])
+  tag        Tag     @relation(fields: [tagId], references: [id])
+  confidence Float   @default(1.0)
+}
+
+model TaskTag {
+  id     String  @id @default(cuid())
+  taskId String
+  tagId  String
+  task   Task   @relation(fields: [taskId], references: [id])
+  tag    Tag    @relation(fields: [tagId], references: [id])
+  weight Float  @default(1.0)
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?  @db.Text
+  access_token      String?  @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?  @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
