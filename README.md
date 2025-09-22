@@ -1,45 +1,159 @@
-# GameQuest 平台主页
+# GameQuest Platform
 
-一个为虚构游戏平台 GameQuest 打造的单页面站点，展示游戏库、热门榜单、社区活动与玩家支持等核心信息。站点使用纯 HTML、CSS 与原生 JavaScript 构建，适合作为营销落地页或产品原型。
+GameQuest is a full-stack marketplace for connecting players with expert providers for game-related tasks, coaching, and duo sessions. The MVP ships with authentication, task management, matching, chat, payments, and an admin console, all built on a modern TypeScript stack.
 
-## 功能概览
+## Tech Stack
 
-- **响应式布局**：自适应桌面与移动端，导航在小屏幕自动折叠。
-- **游戏筛选**：支持按关键词、类型、发行时间、评分与平台进行组合筛选。
-- **热门榜单**：切换查看评分最高游戏或即将上线新作。
-- **心愿单模拟**：在游戏卡片上添加或移除，动态更新心愿单计数。
-- **社区与活动展示**：突出直播活动、创作者计划与赛事日程。
-- **加入表单**：简单的表单验证与反馈，模拟预约登记流程。
+- **Next.js 14 (App Router) & React 18** – front-end, layouts, routing, and server components
+- **TypeScript** – type safety across client and server code
+- **Tailwind CSS** – styling and utility-first design system
+- **NextAuth** – email magic-link auth with optional Google/Discord providers
+- **Prisma ORM + PostgreSQL** – relational data layer with schema defined in `prisma/schema.prisma`
+- **Stripe (test mode)** – checkout sessions and webhook driven order activation
+- **Polling chat** – lightweight task conversations with REST endpoints
+- **Docker & docker-compose** – local development stack (web, Postgres, Mailhog)
+- **ESLint + Prettier** – linting and formatting
 
-## 目录结构
+## Core Features
+
+- Players can create tasks with budgets, languages, schedules, and tags
+- Providers browse/filter tasks, submit offers, and chat after acceptance
+- Owners accept offers to create orders, pay via Stripe checkout, and track progress
+- Orders capture platform fee and collect ratings from both parties
+- Matching endpoint scores top providers using tag similarity, availability overlap, pricing fit, and ratings
+- Profiles store availability, languages, games, rates, and tags
+- Admin console lists users, tasks, and orders with status overrides
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- Docker (for the recommended local stack)
+
+### Environment Variables
+
+Create `.env` from the example template:
+
+```bash
+cp .env.example .env
+```
+
+Populate the secrets for NextAuth, email transport, and Stripe test keys. Update `DATABASE_URL` if you use a local Postgres instance outside docker-compose.
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
+### Database Setup
+
+Push the Prisma schema and seed demo data:
+
+```bash
+npm run db:push
+npm run seed
+```
+
+### Local Development
+
+Start the Next.js dev server (ensure Postgres is running locally or via Docker):
+
+```bash
+npm run dev
+```
+
+To spin up the full stack with Postgres and Mailhog using Docker:
+
+```bash
+docker-compose up --build
+```
+
+Visit `http://localhost:3000` for the app and `http://localhost:8025` for the Mailhog inbox (email magic links).
+
+### Stripe Webhook
+
+Expose the webhook endpoint during development (replace `whsec_test` with your real signing secret):
+
+```bash
+stripe listen --forward-to localhost:3000/api/pay/webhook
+```
+
+## Project Structure
 
 ```
-.
-├── index.html          # 页面主体
-├── assets
-│   ├── css
-│   │   └── style.css   # 全局样式与响应式设计
-│   └── js
-│       └── app.js      # 数据、筛选逻辑与交互脚本
-└── README.md
+app/
+  layout.tsx, page.tsx, routes, and API handlers
+components/
+  Reusable UI, forms, chat, admin panels
+lib/
+  Prisma client, auth config, scoring utilities, Stripe helper
+prisma/
+  schema.prisma, seed.ts
+styles/
+  globals.css
 ```
 
-## 本地预览
+Key API routes live under `app/api/*` and implement task CRUD, offers, orders, messages, matching, payments, and admin functionality.
 
-1. 克隆仓库并进入项目目录。
-2. 直接使用任意静态文件服务器，例如：
+## Seeding Accounts
 
-   ```bash
-   python3 -m http.server 8000
-   ```
+`npm run seed` creates:
 
-3. 在浏览器访问 `http://localhost:8000/` 即可查看页面效果。
+- Admin user: `admin@example.com`
+- Five sample providers with diverse availability, tags, and rates
+- Six canonical tags plus three demo tasks
 
-> 如需部署到 GitHub Pages，仅需将仓库设置为通过 `main` 分支发布即可。
+## Scripts
 
-## 自定义建议
+- `npm run dev` – Next.js dev server
+- `npm run build` – production build
+- `npm start` – start Next.js in production mode
+- `npm run lint` – lint with ESLint
+- `npm run db:push` – push Prisma schema to the configured database
+- `npm run seed` – seed demo data
 
-- 在 `app.js` 中扩展游戏数据，或通过接口替换静态数据。
-- 将样式拆分为模块化 SCSS/Sass 结构，便于团队协作。
-- 集成真实表单处理服务（如 Netlify Forms、Formspree），收集潜在用户信息。
-- 增加多语言支持与深浅色主题切换，以提升全球用户体验。
+## Payments Flow
+
+1. Task owner accepts an offer to create an order (status `PENDING_PAYMENT`).
+2. Checkout session (`/api/pay/checkout`) redirects the buyer to Stripe.
+3. Webhook (`/api/pay/webhook`) confirms payment, sets order `IN_PROGRESS`, and updates the task status.
+4. Participants mark completion and optionally rate each other; averages are aggregated per user.
+
+## Matching
+
+`/api/match?taskId=...` returns the top 20 candidates scored by:
+
+```
+0.5 * tag jaccard +
+0.2 * availability overlap +
+0.2 * hourly rate fit +
+0.1 * normalized rating
+```
+
+Tags are normalized via aliases defined in `lib/tags.ts`, and availability is encoded as a 168-bit string.
+
+## Authentication
+
+- Default: email magic link (Mailhog for local testing)
+- Optional providers: Google, Discord (env gated)
+- Session strategy: database with Prisma adapter
+- Admin role gate keeps `/admin` routes and API endpoints
+
+## Testing & Quality
+
+Automated tests are not included yet. Use the lint command before committing:
+
+```bash
+npm run lint
+```
+
+## Deployment
+
+- `Dockerfile` builds a production image with compiled Next.js assets
+- Adjust environment variables and secrets before deploying
+
+## License
+
+MIT
