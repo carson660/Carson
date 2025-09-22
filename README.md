@@ -1,54 +1,45 @@
-<header>
+# GameQuest 平台主页
 
-<!--
-  <<< Author notes: Course header >>>
-  Include a 1280×640 image, course title in sentence case, and a concise description in emphasis.
-  In your repository settings: enable template repository, add your 1280×640 social image, auto delete head branches.
-  Add your open source license, GitHub uses MIT license.
--->
+一个为虚构游戏平台 GameQuest 打造的单页面站点，展示游戏库、热门榜单、社区活动与玩家支持等核心信息。站点使用纯 HTML、CSS 与原生 JavaScript 构建，适合作为营销落地页或产品原型。
 
-# GitHub Pages
+## 功能概览
 
-_Create a site or blog from your GitHub repositories with GitHub Pages._
+- **响应式布局**：自适应桌面与移动端，导航在小屏幕自动折叠。
+- **游戏筛选**：支持按关键词、类型、发行时间、评分与平台进行组合筛选。
+- **热门榜单**：切换查看评分最高游戏或即将上线新作。
+- **心愿单模拟**：在游戏卡片上添加或移除，动态更新心愿单计数。
+- **社区与活动展示**：突出直播活动、创作者计划与赛事日程。
+- **加入表单**：简单的表单验证与反馈，模拟预约登记流程。
 
-</header>
+## 目录结构
 
-<!--
-  <<< Author notes: Step 1 >>>
-  Choose 3-5 steps for your course.
-  The first step is always the hardest, so pick something easy!
-  Link to docs.github.com for further explanations.
-  Encourage users to open new tabs for steps!
--->
+```
+.
+├── index.html          # 页面主体
+├── assets
+│   ├── css
+│   │   └── style.css   # 全局样式与响应式设计
+│   └── js
+│       └── app.js      # 数据、筛选逻辑与交互脚本
+└── README.md
+```
 
-## Step 1: Enable GitHub Pages
+## 本地预览
 
-_Welcome to GitHub Pages and Jekyll :tada:!_
+1. 克隆仓库并进入项目目录。
+2. 直接使用任意静态文件服务器，例如：
 
-The first step is to enable GitHub Pages on this [repository](https://docs.github.com/en/get-started/quickstart/github-glossary#repository). When you enable GitHub Pages on a repository, GitHub takes the content that's on the main branch and publishes a website based on its contents.
+   ```bash
+   python3 -m http.server 8000
+   ```
 
-### :keyboard: Activity: Enable GitHub Pages
+3. 在浏览器访问 `http://localhost:8000/` 即可查看页面效果。
 
-1. Open a new browser tab, and work on the steps in your second tab while you read the instructions in this tab.
-1. Under your repository name, click **Settings**.
-1. Click **Pages** in the **Code and automation** section.
-1. Ensure "Deploy from a branch" is selected from the **Source** drop-down menu, and then select `main` from the **Branch** drop-down menu.
-1. Click the **Save** button.
-1. Wait about _one minute_ then refresh this page (the one you're following instructions from). [GitHub Actions](https://docs.github.com/en/actions) will automatically update to the next step.
-   > Turning on GitHub Pages creates a deployment of your repository. GitHub Actions may take up to a minute to respond while waiting for the deployment. Future steps will be about 20 seconds; this step is slower.
-   > **Note**: In the **Pages** of **Settings**, the **Visit site** button will appear at the top. Click the button to see your GitHub Pages site.
+> 如需部署到 GitHub Pages，仅需将仓库设置为通过 `main` 分支发布即可。
 
-<footer>
+## 自定义建议
 
-<!--
-  <<< Author notes: Footer >>>
-  Add a link to get support, GitHub status page, code of conduct, license link.
--->
-
----
-
-Get help: [Post in our discussion board](https://github.com/orgs/skills/discussions/categories/github-pages) &bull; [Review the GitHub status page](https://www.githubstatus.com/)
-
-&copy; 2023 GitHub &bull; [Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md) &bull; [MIT License](https://gh.io/mit)
-
-</footer>
+- 在 `app.js` 中扩展游戏数据，或通过接口替换静态数据。
+- 将样式拆分为模块化 SCSS/Sass 结构，便于团队协作。
+- 集成真实表单处理服务（如 Netlify Forms、Formspree），收集潜在用户信息。
+- 增加多语言支持与深浅色主题切换，以提升全球用户体验。
